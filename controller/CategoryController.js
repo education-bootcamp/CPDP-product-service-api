@@ -1,10 +1,10 @@
 const CategorySchema = require('../model/CategorySchema');
 // save (POST)
 const createCategory = async (request, response) => {
-    try{
-        const {categoryName,file,countryIds} = request.body;
-        if (!categoryName || !file || !countryIds){
-            return response.status(400).json({code:400, message:'some fields are missing!..', data:null});
+    try {
+        const {categoryName, file, countryIds} = request.body;
+        if (!categoryName || !file || !countryIds) {
+            return response.status(400).json({code: 400, message: 'some fields are missing!..', data: null});
         }
         const category = new CategorySchema({
             // client side must send the file resource
@@ -32,60 +32,79 @@ const createCategory = async (request, response) => {
         });
 
         const saveData = await category.save();
-        return response.status(201).json({code:201, message:'category has been saved...', data:saveData});
-    }catch (e) {
-        response.status(500).json({code:500, message:'something went wrong...', error:e});
+        return response.status(201).json({code: 201, message: 'category has been saved...', data: saveData});
+    } catch (e) {
+        response.status(500).json({code: 500, message: 'something went wrong...', error: e});
     }
 }
 // update (PUT)
 const updateCategory = async (request, response) => {
-    try{
+    try {
         const {categoryName} = request.body;
-        if (!categoryName){
-            return response.status(400).json({code:400, message:'some fields are missing!..', data:null});
+        if (!categoryName) {
+            return response.status(400).json({code: 400, message: 'some fields are missing!..', data: null});
         }
-        const updateData = await CategorySchema.findOneAndUpdate({'_id':request.params.id},{
-            $set:{
-                categoryName:categoryName
+        const updateData = await CategorySchema.findOneAndUpdate({'_id': request.params.id}, {
+            $set: {
+                categoryName: categoryName
             }
-        },{new:true});
-        return response.status(200).json({code:200, message:'category has been updated...', data:updateData});
-    }catch (e) {
-        response.status(500).json({code:500, message:'something went wrong...', error:e});
+        }, {new: true});
+        return response.status(200).json({code: 200, message: 'category has been updated...', data: updateData});
+    } catch (e) {
+        response.status(500).json({code: 500, message: 'something went wrong...', error: e});
     }
 }
 // delete (DELETE)
 const deleteCategory = async (request, response) => {
-    try{
-        if (!request.params.id){
-            return response.status(400).json({code:400, message:'some fields are missing!..', data:null});
+    try {
+        if (!request.params.id) {
+            return response.status(400).json({code: 400, message: 'some fields are missing!..', data: null});
         }
         const deletedData =
-            await CategorySchema.findOneAndDelete({'_id':request.params.id});
-        return response.status(204).json({code:204, message:'category has been deleted...', data:deletedData});
-    }catch (e) {
-        response.status(500).json({code:500, message:'something went wrong...', error:e});
+            await CategorySchema.findOneAndDelete({'_id': request.params.id});
+        return response.status(204).json({code: 204, message: 'category has been deleted...', data: deletedData});
+    } catch (e) {
+        response.status(500).json({code: 500, message: 'something went wrong...', error: e});
     }
 }
 // find by id (GET)
 const findCategoryById = async (request, response) => {
-    try{
-        if (!request.params.id){
-            return response.status(400).json({code:400, message:'some fields are missing!..', data:null});
+    try {
+        if (!request.params.id) {
+            return response.status(400).json({code: 400, message: 'some fields are missing!..', data: null});
         }
         const categoryData =
-            await CategorySchema.findById({'_id':request.params.id});
-        if (categoryData){
-            return response.status(200).json({code:200, message:'category data...', data:categoryData});
+            await CategorySchema.findById({'_id': request.params.id});
+        if (categoryData) {
+            return response.status(200).json({code: 200, message: 'category data...', data: categoryData});
         }
-        return response.status(404).json({code:404, message:'category data not found...', data:null});
-    }catch (e) {
-        response.status(500).json({code:500, message:'something went wrong...', error:e});
+        return response.status(404).json({code: 404, message: 'category data not found...', data: null});
+    } catch (e) {
+        response.status(500).json({code: 500, message: 'something went wrong...', error: e});
     }
 }
 // find all (GET)
 const findAllCategories = (request, response) => {
-    console.log(request.body);
+   try{
+       const {searchText, page=1, size=10}=request.query;
+       const pageIndex = parseInt(page);
+       const pageSize = parseInt(size);
+
+       const query={};
+       if(searchText){
+           query.$text={$search:searchText}
+       }
+       const skip = (pageIndex-1)*pageSize;
+       const categoryList = CategorySchema.find(query)
+           .limit(pageSize)
+           .skip(skip);
+       const categoryListCount = CategorySchema.countDocuments(query);
+       return response.status(200).json({code: 200, message: 'category data data...', data:{list: categoryList, dataCount:categoryListCount}});
+   }catch (e) {
+       response.status(500).json({code: 500, message: 'something went wrong...', error: e});
+   }
+
+
 }
 module.exports = {
     createCategory, updateCategory, deleteCategory, findCategoryById, findAllCategories
