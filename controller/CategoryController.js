@@ -2,7 +2,7 @@ const CategorySchema = require('../model/CategorySchema');
 // save (POST)
 const createCategory = async (request, response) => {
     try{
-        const {categoryName,file, countryIds} = request.body;
+        const {categoryName,file,countryIds} = request.body;
         if (!categoryName || !file || !countryIds){
             return response.status(400).json({code:400, message:'some fields are missing!..', data:null});
         }
@@ -38,8 +38,21 @@ const createCategory = async (request, response) => {
     }
 }
 // update (PUT)
-const updateCategory = (request, response) => {
-    console.log(request.body);
+const updateCategory = async (request, response) => {
+    try{
+        const {categoryName} = request.body;
+        if (!categoryName){
+            return response.status(400).json({code:400, message:'some fields are missing!..', data:null});
+        }
+        const updateData = await CategorySchema.findOneAndUpdate({'_id':request.params.id},{
+            $set:{
+                categoryName:categoryName
+            }
+        },{new:true});
+        return response.status(200).json({code:200, message:'customer has been updated...', data:updateData});
+    }catch (e) {
+        response.status(500).json({code:500, message:'something went wrong...', error:e});
+    }
 }
 // delete (DELETE)
 const deleteCategory = (request, response) => {
