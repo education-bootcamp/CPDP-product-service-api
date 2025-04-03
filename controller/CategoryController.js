@@ -84,7 +84,7 @@ const findCategoryById = async (request, response) => {
     }
 }
 // find all (GET)
-const findAllCategories = (request, response) => {
+const findAllCategories = async (request, response) => {
    try{
        const {searchText, page=1, size=10}=request.query;
        const pageIndex = parseInt(page);
@@ -95,10 +95,10 @@ const findAllCategories = (request, response) => {
            query.$text={$search:searchText}
        }
        const skip = (pageIndex-1)*pageSize;
-       const categoryList = CategorySchema.find(query)
+       const categoryList = await CategorySchema.find(query)
            .limit(pageSize)
            .skip(skip);
-       const categoryListCount = CategorySchema.countDocuments(query);
+       const categoryListCount = await CategorySchema.countDocuments(query);
        return response.status(200).json({code: 200, message: 'category data data...', data:{list: categoryList, dataCount:categoryListCount}});
    }catch (e) {
        response.status(500).json({code: 500, message: 'something went wrong...', error: e});
