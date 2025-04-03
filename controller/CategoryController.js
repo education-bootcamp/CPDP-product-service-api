@@ -55,8 +55,17 @@ const updateCategory = async (request, response) => {
     }
 }
 // delete (DELETE)
-const deleteCategory = (request, response) => {
-    console.log(request.body);
+const deleteCategory = async (request, response) => {
+    try{
+        if (!request.params.id){
+            return response.status(400).json({code:400, message:'some fields are missing!..', data:null});
+        }
+        const deletedData =
+            await CategorySchema.findOneAndDelete({'_id':request.params.id});
+        return response.status(204).json({code:204, message:'customer has been deleted...', data:deletedData});
+    }catch (e) {
+        response.status(500).json({code:500, message:'something went wrong...', error:e});
+    }
 }
 // find by id (GET)
 const findCategoryById = (request, response) => {
