@@ -32,7 +32,7 @@ const createCategory = async (request, response) => {
         });
 
         const saveData = await category.save();
-        response.status(201).json({code:201, message:'customer has been saved...', data:saveData});
+        return response.status(201).json({code:201, message:'customer has been saved...', data:saveData});
     }catch (e) {
         response.status(500).json({code:500, message:'something went wrong...', error:e});
     }
