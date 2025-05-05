@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const Eureka = require('eureka-js-client').Eureka;
 require('dotenv').config();
 const bodyParser = require('body-parser');
 
@@ -19,6 +20,35 @@ const CartRoute = require('./route/CartRoute');
 const BookmarkRoute = require('./route/BookmarkRoute');
 const ReviewRoute = require('./route/ReviewRoute');
 //====================
+
+/*===============================*/
+const eurekaClient = new Eureka({
+    instance: {
+        app: 'product-service-api',
+        instanceId: `product-service-api:${serverPort}`,
+        hostName: 'localhost',
+        ipAddr: '127.0.0.1',
+        port: {
+            '$': parseInt(serverPort),
+            '@enabled': true
+        },
+        vipAddress: 'product-service-api',
+        dataCenterInfo: {
+            '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
+            name: 'MyOwn'
+        }
+    },
+    eureka: {
+        host: '127.0.0.1',
+        port: 8761,
+        servicePath: '/eureka/apps/'
+    }
+});
+eurekaClient.start(function (error){
+    console.log('#############################');
+    console.log(error || 'eureka registration is complete!')
+})
+/*===============================*/
 
 try {
     mongoose.connect(`${process.env.DB_URL}:${process.env.DB_PORT}/${process.env.DB_NAME}`)
