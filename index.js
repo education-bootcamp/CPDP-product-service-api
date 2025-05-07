@@ -45,7 +45,6 @@ const eurekaClient = new Eureka({
     }
 });
 eurekaClient.start(function (error){
-    console.log('#############################');
     console.log(error || 'eureka registration is complete!')
 })
 /*===============================*/
