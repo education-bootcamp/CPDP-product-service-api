@@ -4,5 +4,5 @@ AWS.config.update({
     secretAccessKey:'',
     region:''
 });
-const s3 =  new AWS.s3();
+const s3 =  new AWS.S3();
 module.exports= s3;
