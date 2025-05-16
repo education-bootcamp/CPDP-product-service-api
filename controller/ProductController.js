@@ -6,12 +6,10 @@ const createProduct = async (request, response) => {
         if (!productName || !file || !actualPrice || !oldPrice || !qty || !description || !discount || !categoryId) {
             return response.status(400).json({code: 400, message: 'some fields are missing!..', data: null});
         }
-        const category = new CategorySchema({
+        const product = new ProductSchema({
             // client side must send the file resource
             // you must upload the icon into the S3 bucket and then you can get the response body.
-
             // the client send the ids of all the available countries, and the system must find all the countries for the request and save.
-
             productName: productName,
             images: [
                 {
@@ -29,9 +27,10 @@ const createProduct = async (request, response) => {
             categoryId: categoryId
         });
 
-        const saveData = await category.save();
+        const saveData = await product.save();
         return response.status(201).json({code: 201, message: 'product has been saved...', data: saveData});
     } catch (e) {
+        console.log(e)
         response.status(500).json({code: 500, message: 'something went wrong...', error: e});
     }
 }
