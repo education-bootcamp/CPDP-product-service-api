@@ -2,38 +2,112 @@ const ProductSchema = require('../model/ProductSchema');
 // save (POST)
 const createProduct = async (request, response) => {
     try {
-        const {productName, file, actualPrice, oldPrice, qty, description, discount, categoryId} = request.body;
-        if (!productName || !file || !actualPrice || !oldPrice || !qty || !description || !discount || !categoryId) {
-            return response.status(400).json({code: 400, message: 'some fields are missing!..', data: null});
+        const {
+            productName,
+            actualPrice,
+            oldPrice,
+            qty,
+            description,
+            discount,
+            categoryId
+        } = request.body;
+
+        // Validation
+        if (!productName || !actualPrice || !oldPrice || !qty || !description || !discount || !categoryId) {
+            return response.status(400).json({
+                code: 400,
+                message: 'Missing required fields: productName, actualPrice, oldPrice, qty, description, discount, categoryId',
+                data: null
+            });
         }
+
+        // Check if file was uploaded
+        if (!request.file) {
+            return response.status(400).json({
+                code: 400,
+                message: 'Product image is required',
+                data: null
+            });
+        }
+
+        // Validate numeric fields
+        if (isNaN(actualPrice) || isNaN(oldPrice) || isNaN(qty) || isNaN(discount)) {
+            return response.status(400).json({
+                code: 400,
+                message: 'Price, quantity, and discount must be valid numbers',
+                data: null
+            });
+        }
+
+        const fileData = request.file;
+
         const product = new ProductSchema({
-            // client side must send the file resource
-            // you must upload the icon into the S3 bucket and then you can get the response body.
-            // the client send the ids of all the available countries, and the system must find all the countries for the request and save.
-            productName: productName,
+            productName: productName.trim(),
             images: [
                 {
-                    hash: 'Temp Hash',
-                    resourceUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRr1TiZMtNq_El78BMq7-uS7g01qtuiAAVNj6tLspl1bAMw_t9AgZsxNlkrEzXrrYMGcz_S_pKEDq4FU-A_vW875CtAp1DHRfKZAt7xoww',
-                    fileName: 'Temp File Name',
-                    directory: 'Temp Directory'
+                    hash: generateFileHash(fileData), // You'll need to implement this function
+                    resourceUrl: fileData.location,
+                    fileName: fileData.originalname,
+                    directory: fileData.key,
+                    size: fileData.size,
+                    mimeType: fileData.mimetype
                 }
-            ], // assume that you have send the image to the s3
-            actualPrice: actualPrice,
-            oldPrice: oldPrice,
-            qty: qty,
-            description: description,
-            discount: discount,
-            categoryId: categoryId
+            ],
+            actualPrice: parseFloat(actualPrice),
+            oldPrice: parseFloat(oldPrice),
+            qty: parseInt(qty),
+            description: description.trim(),
+            discount: parseFloat(discount),
+            categoryId: categoryId,
+            createdAt: new Date(),
+            updatedAt: new Date()
         });
 
         const saveData = await product.save();
-        return response.status(201).json({code: 201, message: 'product has been saved...', data: saveData});
-    } catch (e) {
-        console.log(e)
-        response.status(500).json({code: 500, message: 'something went wrong...', error: e});
+
+        return response.status(201).json({
+            code: 201,
+            message: 'Product has been created successfully',
+            data: {
+                id: saveData._id,
+                productName: saveData.productName,
+                images: saveData.images,
+                actualPrice: saveData.actualPrice,
+                oldPrice: saveData.oldPrice,
+                qty: saveData.qty,
+                description: saveData.description,
+                discount: saveData.discount,
+                categoryId: saveData.categoryId,
+                createdAt: saveData.createdAt
+            }
+        });
+
+    } catch (error) {
+        console.error('Error creating product:', error);
+
+        // Handle specific errors
+        if (error.name === 'ValidationError') {
+            return response.status(400).json({
+                code: 400,
+                message: 'Validation error',
+                errors: Object.values(error.errors).map(e => e.message)
+            });
+        }
+
+        if (error.code === 11000) {
+            return response.status(409).json({
+                code: 409,
+                message: 'Product with this name already exists'
+            });
+        }
+
+        return response.status(500).json({
+            code: 500,
+            message: 'Internal server error',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
-}
+};
 // update (PUT)
 const updateProduct = async (request, response) => {
     try {
@@ -114,6 +188,15 @@ const findAllProducts = async (request, response) => {
 
 
 }
+
+// Helper function to generate file hash (you can use crypto for this)
+const crypto = require('crypto');
+
+const generateFileHash = (fileData) => {
+    return crypto.createHash('md5').update(fileData.key + fileData.originalname).digest('hex');
+};
+
+
 module.exports = {
     createProduct, updateProduct, deleteProduct, findProductById, findAllProducts
 }
